@@ -1,0 +1,20 @@
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN      880/systemd-resolve 
+tcp        0      0 127.0.0.1:41823         0.0.0.0:*               LISTEN      3899/code-6f1763612 
+tcp        0      0 0.0.0.0:139             0.0.0.0:*               LISTEN      1288/smbd           
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      1/init              
+tcp        0      0 127.0.0.54:53           0.0.0.0:*               LISTEN      880/systemd-resolve 
+tcp        0      0 0.0.0.0:445             0.0.0.0:*               LISTEN      1288/smbd           
+tcp6       0      0 :::139                  :::*                    LISTEN      1288/smbd           
+tcp6       0      0 :::22                   :::*                    LISTEN      1/init              
+tcp6       0      0 :::445                  :::*                    LISTEN      1288/smbd           
+udp        0      0 127.0.0.54:53           0.0.0.0:*                           880/systemd-resolve 
+udp        0      0 127.0.0.53:53           0.0.0.0:*                           880/systemd-resolve 
+udp        0      0 192.168.1.17:68         0.0.0.0:*                           700/systemd-network 
+udp        0      0 192.168.1.255:137       0.0.0.0:*                           1283/nmbd           
+udp        0      0 192.168.1.17:137        0.0.0.0:*                           1283/nmbd           
+udp        0      0 0.0.0.0:137             0.0.0.0:*                           1283/nmbd           
+udp        0      0 192.168.1.255:138       0.0.0.0:*                           1283/nmbd           
+udp        0      0 192.168.1.17:138        0.0.0.0:*                           1283/nmbd           
+udp        0      0 0.0.0.0:138             0.0.0.0:*                           1283/nmbd           

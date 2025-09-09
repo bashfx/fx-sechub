@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#----------------------------------------------------------------------
+# Export aliases for Claude/agentic systems
+#----------------------------------------------------------------------
+
+# Output location
+OUTPUT_DIR="$HOME/.local/etc/agentic"
+OUTPUT_FILE="$OUTPUT_DIR/aliases.txt"
+
+# Ensure output directory exists
+mkdir -p "$OUTPUT_DIR"
+
+# Source the environment
+source ~/.bashrc 2>/dev/null
+
+# Header
+cat > "$OUTPUT_FILE" << EOF
+# Exported Aliases for Agentic Systems
+# Generated: $(date)
+# Location: $OUTPUT_FILE
+
+EOF
+
+# Export all current aliases with formatting
+echo "## All Aliases" >> "$OUTPUT_FILE"
+echo "---" >> "$OUTPUT_FILE"
+alias | sort >> "$OUTPUT_FILE"
+echo "" >> "$OUTPUT_FILE"
+
+# Export power collections
+echo "## Power Collections" >> "$OUTPUT_FILE"
+echo "---" >> "$OUTPUT_FILE"
+
+echo "### POWER_ALIAS" >> "$OUTPUT_FILE"
+for alias in $POWER_ALIAS; do
+    echo "  $alias" >> "$OUTPUT_FILE"
+done | sort
+echo "" >> "$OUTPUT_FILE"
+
+echo "### POWER_JUMPS" >> "$OUTPUT_FILE"
+for jump in $POWER_JUMPS; do
+    echo "  $jump" >> "$OUTPUT_FILE"
+done | sort
+echo "" >> "$OUTPUT_FILE"
+
+# Export key environment variables for reference
+echo "## Key Environment Variables" >> "$OUTPUT_FILE"
+echo "---" >> "$OUTPUT_FILE"
+echo "XDG_BIN_HOME=$XDG_BIN_HOME" >> "$OUTPUT_FILE"
+echo "XDG_ENV_DIR=$XDG_ENV_DIR" >> "$OUTPUT_FILE"
+echo "XDG_USER_ENV_DIR=$XDG_USER_ENV_DIR" >> "$OUTPUT_FILE"
+echo "MAIN_USER_RC=$MAIN_USER_RC" >> "$OUTPUT_FILE"
+
+echo "✓ Aliases exported to: $OUTPUT_FILE"

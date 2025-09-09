@@ -1,0 +1,77 @@
+MCP Security Monitoring Started: Mon Sep  8 02:53:51 PM MDT 2025
+========================================
+[14:53:51] Initializing MCP security monitoring...
+[14:53:51] Starting MCP command execution monitoring...
+[14:53:51] Starting JSON-RPC traffic monitoring...
+[14:53:51] Starting MCP file access monitoring...
+[14:53:51] All monitoring processes started
+[14:53:51] JSON-RPC monitoring requires root access (run with sudo for full monitoring)
+[14:53:51] Starting MCP process monitoring...
+[14:53:51] Starting MCP network monitoring...
+[14:53:51] WARNING: High number of MCP processes: 6
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  1804 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  1932 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110043  0.0  0.0   7472  1680 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110047  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:53:51] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:53:51] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:53:51] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:53:51] MCP Process: PID=110043 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:53:51] MCP Process: PID=110047 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110360  0.0  0.0   7472  1688 pts/4    S+   14:54   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:21] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:21] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:21] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:21] MCP Process: PID=110360 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110562  0.0  0.0   7472  1692 pts/4    S+   14:54   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:52] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:52] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:52] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:52] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:54:52] MCP Process: PID=110562 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110790  0.0  0.0   7472  1696 pts/4    S+   14:55   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:22] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:22] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:22] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:22] MCP Process: PID=110790 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     111642  0.0  0.0   7472  1700 pts/4    S+   14:55   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:52] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:52] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:52] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:55:52] MCP Process: PID=111642 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:22] WARNING: High number of MCP processes: 6
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2188 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     112324  0.0  0.0   7472  1704 pts/4    S+   14:56   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] MCP Process: PID=109991 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:22] MCP Process: PID=110003 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:22] MCP Process: PID=110005 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:22] MCP Process: PID=110027 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:22] WARNING: High CPU usage by MCP process PID 112317: 112%
+[14:56:22] MCP Process: PID=112317 CPU=112% MEM=1.9% CMD=node /home/xnull/.local/lib/node/bin/gemini mcp list 
+[14:56:22] MCP Process: PID=112324 CPU=0.0% MEM=0.0% CMD=/bin/bash ./monitor_mcp.sh 
+[14:56:37] Stopping MCP monitoring...

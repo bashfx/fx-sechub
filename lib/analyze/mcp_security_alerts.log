@@ -1,0 +1,36 @@
+MCP Security Alerts Started: Mon Sep  8 02:53:51 PM MDT 2025
+====================================
+[14:53:51] WARNING: High number of MCP processes: 6
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  1804 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  1932 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110043  0.0  0.0   7472  1680 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:53:51] SECURITY ALERT: Suspicious MCP process: xnull     110047  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:21] SECURITY ALERT: Suspicious MCP process: xnull     110360  0.0  0.0   7472  1688 pts/4    S+   14:54   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:54:51] SECURITY ALERT: Suspicious MCP process: xnull     110562  0.0  0.0   7472  1692 pts/4    S+   14:54   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:22] SECURITY ALERT: Suspicious MCP process: xnull     110790  0.0  0.0   7472  1696 pts/4    S+   14:55   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:55:52] SECURITY ALERT: Suspicious MCP process: xnull     111642  0.0  0.0   7472  1700 pts/4    S+   14:55   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] WARNING: High number of MCP processes: 6
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     109991  0.0  0.0   7472  3584 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110003  0.0  0.0   7472  2188 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110005  0.0  0.0   7472  2060 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     110027  0.0  0.0   7472  1676 pts/4    S+   14:53   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] SECURITY ALERT: Suspicious MCP process: xnull     112324  0.0  0.0   7472  1704 pts/4    S+   14:56   0:00 /bin/bash ./monitor_mcp.sh
+[14:56:22] WARNING: High CPU usage by MCP process PID 112317: 112%

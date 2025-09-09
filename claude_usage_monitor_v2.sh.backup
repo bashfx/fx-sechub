@@ -1,0 +1,517 @@
+#!/bin/bash
+# claude_usage_monitor_v2.sh - Properly Fixed Version with JSON Timestamp Analysis
+# Mission: MISSION_01_CLAUDE_USAGE_DETECTION - CORRECTED IMPLEMENTATION
+# Commander: Edgar (EDGAROS) - Vigilant Sentinel
+
+set -euo pipefail
+
+# Tool metadata
+TOOL_NAME="Claude Usage Monitor v2.0"
+TOOL_VERSION="2.0.0-FIXED"
+TOOL_MISSION="MISSION_01_CLAUDE_USAGE_DETECTION"
+
+# Core directories
+CLAUDE_DIR="$HOME/.claude"
+PROJECTS_DIR="$CLAUDE_DIR/projects"
+CONFIG_DIR="$HOME/.local/etc/agentic"
+SNAPSHOT_DIR="$HOME/.local/share/agentic/ccuse"
+
+# Boxy orchestrator - handles graceful fallback
+use_boxy() {
+    if command -v boxy >/dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Enhanced output with boxy integration and fallback
+print_header() {
+    local title="$1"
+    local theme="${2:-info}"
+    
+    if use_boxy; then
+        echo "$title" | boxy --theme "$theme" --header "🛡️ $TOOL_NAME"
+    else
+        echo "=============================================="
+        echo "🛡️ $TOOL_NAME"
+        echo "$title"
+        echo "=============================================="
+    fi
+}
+
+print_section() {
+    local content="$1"
+    local theme="${2:-info}"
+    local title="${3:-}"
+    
+    if use_boxy; then
+        if [ -n "$title" ]; then
+            echo -e "$content" | boxy --theme "$theme" --title "$title" --width max
+        else
+            echo -e "$content" | boxy --theme "$theme" --width max
+        fi
+    else
+        if [ -n "$title" ]; then
+            echo "--- $title ---"
+        fi
+        echo -e "$content"
+        echo
+    fi
+}
+
+# CORRECT IMPLEMENTATION: JSON timestamp-based session discovery
+find_sessions_with_json_timestamps() {
+    local hours_back="${1:-1}"
+    local today=$(date -u +"%Y-%m-%d")
+    local cutoff_epoch=$(date -d "$hours_back hours ago" +%s)
+    
+    # Step 1: OPTIMIZATION - Use grep to pre-filter files containing today's date
+    local candidate_files=$(find "$PROJECTS_DIR" -name "*.jsonl" -type f \
+        -exec grep -l "$today" {} \; 2>/dev/null)
+    
+    if [[ -z "$candidate_files" ]]; then
+        return 0
+    fi
+    
+    # Step 2: Parse JSON timestamps from candidates to find genuine recent activity  
+    local active_sessions=""
+    while IFS= read -r session_file; do
+        if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
+            # Get the most recent timestamp from this session (check last few entries)
+            local latest_timestamp=$(timeout 5s tail -10 "$session_file" | \
+                                   grep '"timestamp":' | tail -1 | \
+                                   sed 's/.*"timestamp":"\([^"]*\)".*/\1/' 2>/dev/null || echo "")
+            
+            if [[ -n "$latest_timestamp" ]]; then
+                # Convert JSON timestamp to epoch for comparison
+                local session_epoch=$(date -d "$latest_timestamp" +%s 2>/dev/null || echo 0)
+                
+                if [[ "$session_epoch" -gt "$cutoff_epoch" ]]; then
+                    active_sessions+="$session_file|$latest_timestamp|$session_epoch\n"
+                fi
+            fi
+        fi
+    done <<< "$candidate_files"
+    
+    echo -e "$active_sessions"
+}
+
+# Session status analysis with CORRECT JSON timestamp parsing
+analyze_session_status() {
+    print_header "Current Session Status (JSON-Based)" "info"
+    
+    # Get sessions active in last hour using JSON timestamps
+    local active_sessions_data=$(find_sessions_with_json_timestamps 1)
+    local active_count=0
+    if [[ -n "$active_sessions_data" ]]; then
+        active_count=$(echo -e "$active_sessions_data" | grep -c "|" 2>/dev/null || echo 0)
+    fi
+    
+    # Get today's sessions using JSON timestamps  
+    local today_sessions_data=$(find_sessions_with_json_timestamps 24)
+    local today_count=0
+    if [[ -n "$today_sessions_data" ]]; then
+        today_count=$(echo -e "$today_sessions_data" | grep -c "|" 2>/dev/null || echo 0)
+    fi
+    
+    # Build status report
+    local status_report=""
+    status_report+="Active Sessions (last hour): $active_count\n"
+    status_report+="Today's Sessions: $today_count\n\n"
+    
+    if [[ "$active_count" -gt 0 ]]; then
+        status_report+="🔄 Currently Active Sessions:\n"
+        
+        while IFS='|' read -r session_file timestamp epoch; do
+            if [[ -n "$session_file" ]]; then
+                local project_dir=$(dirname "$session_file")
+                local project_name=$(basename "$project_dir" | sed 's/-home-xnull-repos-/-/' | sed 's/-/\//g')
+                local session_id=$(basename "$session_file" .jsonl)
+                local current_epoch=$(date +%s)
+                local minutes_ago=$(( (current_epoch - epoch) / 60 ))
+                
+                status_report+="• $project_name - ${session_id:0:8} (${minutes_ago}m ago)\n"
+            fi
+        done <<< "$active_sessions_data"
+    fi
+    
+    print_section "$status_report" "info"
+}
+
+# Usage pattern analysis with JSON timestamp reconstruction
+analyze_usage_patterns() {
+    print_header "Usage Pattern Analysis (JSON-Based)" "info"
+    
+    local today_sessions_data=$(find_sessions_with_json_timestamps 24)
+    
+    if [[ -z "$today_sessions_data" ]]; then
+        print_section "No sessions found for today" "warning"
+        return 0
+    fi
+    
+    local total_messages=0
+    local total_sessions=0
+    local session_details=""
+    
+    # Analyze each session that had activity today
+    while IFS='|' read -r session_file timestamp epoch; do
+        if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
+            total_sessions=$((total_sessions + 1))
+            
+            # Count messages and analyze session
+            local session_messages=$(wc -l < "$session_file" 2>/dev/null || echo 0)
+            total_messages=$((total_messages + session_messages))
+            
+            local project_name=$(basename "$(dirname "$session_file")" | sed 's/-home-xnull-repos-/-/' | sed 's/-/\//g')
+            local session_id=$(basename "$session_file" .jsonl)
+            local file_size=$(du -h "$session_file" 2>/dev/null | cut -f1)
+            
+            session_details+="• $project_name - ${session_id:0:8} ($session_messages messages, $file_size)\n"
+        fi
+    done <<< "$today_sessions_data"
+    
+    # Build analysis report
+    local analysis_report=""
+    analysis_report+="📊 Today's Usage Summary (JSON-Based Analysis):\n"
+    analysis_report+="• Active Sessions Today: $total_sessions\n"
+    analysis_report+="• Total Messages: $total_messages\n"
+    analysis_report+="• Average Messages/Session: $((total_messages / (total_sessions > 0 ? total_sessions : 1)))\n\n"
+    analysis_report+="📋 Session Details:\n"
+    analysis_report+="$session_details"
+    
+    print_section "$analysis_report" "info"
+}
+
+# Main dashboard
+show_dashboard() {
+    analyze_session_status
+    echo
+    analyze_usage_patterns
+    echo
+    
+    # System status
+    local total_files=$(find "$PROJECTS_DIR" -name "*.jsonl" 2>/dev/null | wc -l)
+    local today_with_activity=$(find_sessions_with_json_timestamps 24 | grep -c "|" 2>/dev/null || echo 0)
+    
+    local system_status=""
+    system_status+="📈 Monitoring Status (CORRECTED v2.0):\n"
+    system_status+="• Analysis Method: JSON timestamp parsing (not file system times)\n"
+    system_status+="• Total Session Files: $total_files\n"
+    system_status+="• Files with Today's Activity: $today_with_activity\n"
+    system_status+="• Data Source: $PROJECTS_DIR\n"
+    
+    print_section "$system_status" "success" "⚙️ System Status"
+}
+
+# Snapshot system for historical analysis and limit debugging
+ensure_snapshot_dir() {
+    mkdir -p "$SNAPSHOT_DIR"
+}
+
+# Create comprehensive usage snapshot in JSON format
+create_usage_snapshot() {
+    local snapshot_type="${1:-manual}"
+    local trigger_reason="${2:-user_requested}"
+    
+    ensure_snapshot_dir
+    
+    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    local date_key=$(date +"%Y%m%d")
+    local time_key=$(date +"%H%M%S")
+    local snapshot_file="$SNAPSHOT_DIR/snapshot_${date_key}_${time_key}_${snapshot_type}.json"
+    
+    # Collect comprehensive usage data
+    local active_sessions_data=$(find_sessions_with_json_timestamps 1)
+    local today_sessions_data=$(find_sessions_with_json_timestamps 24)
+    local total_files=$(find "$PROJECTS_DIR" -name "*.jsonl" 2>/dev/null | wc -l)
+    
+    # Count sessions and messages
+    local active_count=0
+    local today_count=0
+    local total_messages_today=0
+    
+    if [[ -n "$active_sessions_data" ]]; then
+        active_count=$(echo -e "$active_sessions_data" | grep -c "|" 2>/dev/null || echo 0)
+    fi
+    
+    if [[ -n "$today_sessions_data" ]]; then
+        today_count=$(echo -e "$today_sessions_data" | grep -c "|" 2>/dev/null || echo 0)
+        
+        # Count total messages for today
+        while IFS='|' read -r session_file timestamp epoch; do
+            if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
+                local session_messages=$(wc -l < "$session_file" 2>/dev/null || echo 0)
+                total_messages_today=$((total_messages_today + session_messages))
+            fi
+        done <<< "$today_sessions_data"
+    fi
+    
+    # Calculate average messages per session safely
+    local avg_messages_per_session
+    if [[ $today_count -gt 0 ]]; then
+        avg_messages_per_session=$((total_messages_today / today_count))
+    else
+        avg_messages_per_session=0
+    fi
+    
+    # Build comprehensive JSON snapshot
+    cat > "$snapshot_file" << EOF
+{
+  "snapshot_metadata": {
+    "timestamp": "$timestamp",
+    "snapshot_type": "$snapshot_type",
+    "trigger_reason": "$trigger_reason",
+    "version": "$TOOL_VERSION"
+  },
+  "usage_summary": {
+    "active_sessions_1h": $active_count,
+    "active_sessions_24h": $today_count,
+    "total_messages_today": $total_messages_today,
+    "total_session_files": $total_files,
+    "avg_messages_per_session": $avg_messages_per_session
+  },
+  "session_details": [
+EOF
+    
+    # Add session details to JSON
+    local first_session=true
+    while IFS='|' read -r session_file timestamp epoch; do
+        if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
+            if [ "$first_session" = false ]; then
+                echo "    ," >> "$snapshot_file"
+            fi
+            first_session=false
+            
+            local project_name=$(basename "$(dirname "$session_file")" | sed 's/-home-xnull-repos-/-/' | sed 's/-/\//g')
+            local session_id=$(basename "$session_file" .jsonl)
+            local session_messages=$(wc -l < "$session_file" 2>/dev/null || echo 0)
+            local file_size_bytes=$(stat -f%z "$session_file" 2>/dev/null || stat -c%s "$session_file" 2>/dev/null || echo 0)
+            
+            cat >> "$snapshot_file" << EOF
+    {
+      "session_file": "$session_file",
+      "project_name": "$project_name",
+      "session_id": "$session_id",
+      "last_activity": "$timestamp",
+      "message_count": $session_messages,
+      "file_size_bytes": $file_size_bytes
+    }EOF
+        fi
+    done <<< "$today_sessions_data"
+    
+    # Close JSON structure
+    cat >> "$snapshot_file" << EOF
+
+  ],
+  "system_info": {
+    "claude_dir": "$CLAUDE_DIR",
+    "projects_dir": "$PROJECTS_DIR",
+    "snapshot_dir": "$SNAPSHOT_DIR"
+  }
+}
+EOF
+    
+    echo "$snapshot_file"
+}
+
+# Create snapshot specifically for token/time limit analysis
+create_limit_snapshot() {
+    local limit_type="${1:-unknown}"
+    local current_usage="${2:-unknown}"
+    local limit_value="${3:-unknown}"
+    
+    local snapshot_file=$(create_usage_snapshot "limit" "${limit_type}_at_${current_usage}_of_${limit_value}")
+    
+    # Add limit-specific analysis to a companion file
+    local analysis_file="${snapshot_file%.json}_analysis.txt"
+    
+    cat > "$analysis_file" << EOF
+LIMIT TRIGGER ANALYSIS
+=====================
+
+Trigger: $limit_type limit reached
+Current Usage: $current_usage
+Limit Value: $limit_value
+Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+POTENTIAL CAUSES FOR EARLY LIMIT TRIGGER:
+- Token counting may include system/hidden tokens not visible to user
+- Conversation context may be larger than displayed message count suggests
+- Previous session state may be contributing to token count
+- Claude may apply safety margins before advertised limits
+
+DEBUGGING STEPS:
+1. Check session message complexity (code blocks, long responses)
+2. Verify if multiple large context files are loaded
+3. Look for hidden system prompts or conversation persistence
+4. Compare message count vs actual token usage in session details
+
+SESSION SNAPSHOT: $snapshot_file
+EOF
+    
+    print_section "Limit snapshot created:\n• Data: $(basename "$snapshot_file")\n• Analysis: $(basename "$analysis_file")" "warning" "🚨 Limit Debug Snapshot"
+}
+
+# Show historical snapshots
+show_snapshots() {
+    ensure_snapshot_dir
+    
+    local snapshots=$(find "$SNAPSHOT_DIR" -name "snapshot_*.json" -type f | sort -r | head -10)
+    
+    if [[ -z "$snapshots" ]]; then
+        print_section "No snapshots found in $SNAPSHOT_DIR" "warning"
+        return 0
+    fi
+    
+    local snapshot_list=""
+    snapshot_list+="📸 Recent Snapshots (last 10):\n\n"
+    
+    while IFS= read -r snapshot_file; do
+        if [[ -n "$snapshot_file" ]]; then
+            local filename=$(basename "$snapshot_file")
+            local filesize=$(du -h "$snapshot_file" | cut -f1)
+            local modified=$(stat -f%Sm -t"%Y-%m-%d %H:%M" "$snapshot_file" 2>/dev/null || stat -c%y "$snapshot_file" | cut -d' ' -f1-2)
+            
+            # Extract snapshot type and trigger from filename
+            local snapshot_type=$(echo "$filename" | sed 's/.*_\([^_]*\)\.json/\1/')
+            
+            snapshot_list+="• $filename ($filesize) - $modified - Type: $snapshot_type\n"
+        fi
+    done <<< "$snapshots"
+    
+    print_section "$snapshot_list" "info" "📊 Historical Snapshots"
+}
+
+# Compare snapshots for trend analysis
+compare_snapshots() {
+    local snapshot1="$1"
+    local snapshot2="$2"
+    
+    if [[ ! -f "$SNAPSHOT_DIR/$snapshot1" ]] || [[ ! -f "$SNAPSHOT_DIR/$snapshot2" ]]; then
+        print_section "Snapshot files not found. Use 'snapshots' command to see available files." "error"
+        return 1
+    fi
+    
+    local file1="$SNAPSHOT_DIR/$snapshot1"
+    local file2="$SNAPSHOT_DIR/$snapshot2"
+    
+    # Extract key metrics for comparison
+    local messages1=$(grep '"total_messages_today":' "$file1" | sed 's/.*: *\([0-9]*\).*/\1/')
+    local sessions1=$(grep '"active_sessions_24h":' "$file1" | sed 's/.*: *\([0-9]*\).*/\1/')
+    local messages2=$(grep '"total_messages_today":' "$file2" | sed 's/.*: *\([0-9]*\).*/\1/')
+    local sessions2=$(grep '"active_sessions_24h":' "$file2" | sed 's/.*: *\([0-9]*\).*/\1/')
+    
+    local comparison=""
+    comparison+="📊 Snapshot Comparison:\n\n"
+    comparison+="Snapshot 1: $snapshot1\n"
+    comparison+="• Messages: $messages1\n"
+    comparison+="• Sessions: $sessions1\n\n"
+    comparison+="Snapshot 2: $snapshot2\n" 
+    comparison+="• Messages: $messages2\n"
+    comparison+="• Sessions: $sessions2\n\n"
+    # Calculate changes safely
+    local msg_change=$((messages2 - messages1))
+    local sess_change=$((sessions2 - sessions1))
+    local msg_direction="no change"
+    local sess_direction="no change"
+    
+    if [[ $msg_change -gt 0 ]]; then
+        msg_direction="increase"
+    elif [[ $msg_change -lt 0 ]]; then
+        msg_direction="decrease"
+    fi
+    
+    if [[ $sess_change -gt 0 ]]; then
+        sess_direction="increase"
+    elif [[ $sess_change -lt 0 ]]; then
+        sess_direction="decrease"
+    fi
+    
+    comparison+="Changes:\n"
+    comparison+="• Messages: $msg_change ($msg_direction)\n"
+    comparison+="• Sessions: $sess_change ($sess_direction)\n"
+    
+    print_section "$comparison" "info" "📈 Trend Analysis"
+}
+
+# Command help
+show_help() {
+    print_header "Claude Usage Monitor v2.0 - CORRECTED Implementation" "info"
+    
+    local help_text=""
+    help_text+="🎯 FEATURES + SNAPSHOT SYSTEM:\n"
+    help_text+="  dashboard        Complete usage analysis with JSON timestamp parsing\n"
+    help_text+="  status          Current session status using actual JSON timestamps\n"
+    help_text+="  patterns        Usage patterns based on JSON content analysis\n"
+    help_text+="  snapshot        Create manual usage snapshot for historical analysis\n"
+    help_text+="  snapshots       Show recent snapshots with metadata\n"
+    help_text+="  compare <s1> <s2>  Compare two snapshots for trend analysis\n"
+    help_text+="  snapshot-token-limit [usage] [limit]  Debug token limit triggers\n"
+    help_text+="  snapshot-time-limit [usage] [limit]   Debug time limit triggers\n\n"
+    
+    help_text+="🔧 KEY IMPROVEMENTS:\n"
+    help_text+="• Uses grep pre-filtering for performance optimization\n"
+    help_text+="• Analyzes JSON timestamps instead of file modification times\n"
+    help_text+="• Properly reconstructs session activity timing\n"
+    help_text+="• Shows genuine session usage vs. file system metadata\n\n"
+    
+    help_text+="📋 Mission: $TOOL_MISSION\n"
+    help_text+="🛡️ Version: CORRECTED Implementation v2.0\n"
+    help_text+="⚡ Optimization: grep + JSON timestamp analysis\n"
+    
+    print_section "$help_text" "info"
+}
+
+# Main command dispatcher
+main() {
+    # Check if Claude directory exists
+    if [ ! -d "$PROJECTS_DIR" ]; then
+        print_section "Claude projects directory not found: $PROJECTS_DIR\nPlease ensure Claude CLI is installed and has been used at least once." "error"
+        exit 1
+    fi
+    
+    # Command dispatch
+    case "${1:-dashboard}" in
+        "status")
+            analyze_session_status
+            ;;
+        "dashboard")
+            show_dashboard
+            ;;
+        "patterns")
+            analyze_usage_patterns
+            ;;
+        "snapshot")
+            snapshot_file=$(create_usage_snapshot "manual" "user_requested")
+            print_section "Manual snapshot created: $(basename "$snapshot_file")" "success" "📸 Snapshot Created"
+            ;;
+        "snapshots")
+            show_snapshots
+            ;;
+        "compare")
+            if [[ $# -lt 3 ]]; then
+                print_section "Usage: ccuse compare <snapshot1> <snapshot2>\nUse 'snapshots' command to see available files." "error"
+                exit 1
+            fi
+            compare_snapshots "$2" "$3"
+            ;;
+        "snapshot-token-limit")
+            create_limit_snapshot "token" "${2:-70%}" "${3:-200k}"
+            ;;
+        "snapshot-time-limit")
+            create_limit_snapshot "time" "${2:-unknown}" "${3:-daily}"
+            ;;
+        "help"|"-h"|"--help")
+            show_help
+            ;;
+        *)
+            print_section "Unknown command: $1\nUse 'help' for command reference." "error"
+            show_help
+            exit 1
+            ;;
+    esac
+}
+
+# Execute main function
+main "$@"

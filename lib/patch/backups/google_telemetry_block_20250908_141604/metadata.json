@@ -1,0 +1,8 @@
+{
+    "patch_name": "google_telemetry_block",
+    "timestamp": "20250908_141604",  
+    "backup_id": "google_telemetry_block_20250908_141604",
+    "user": "root",
+    "system": "Linux luffy 6.8.0-79-generic #79-Ubuntu SMP PREEMPT_DYNAMIC Tue Aug 12 14:42:46 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux",
+    "applied": true
+}
