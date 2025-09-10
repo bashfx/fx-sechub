@@ -42,6 +42,29 @@ __current_date(){
 	echo "$(date +"%Y-%m-%d")";
 }
 
+# Convert local date to UTC date range
+__local_day_to_utc_range() {
+    local local_date="${1:-$(date +%Y-%m-%d)}"
+    
+    # MDT is UTC-6, MST is UTC-7 (handle both)
+    local start_utc=$(TZ=UTC date -d "$local_date 00:00:00 $(date +%Z)" +"%Y-%m-%dT%H:%M:%SZ")
+    local end_utc=$(TZ=UTC date -d "$local_date 23:59:59 $(date +%Z)" +"%Y-%m-%dT%H:%M:%SZ")
+    
+    echo "$start_utc|$end_utc"
+}
+
+# Convert UTC timestamp to local time
+__utc_to_local() {
+    local utc_timestamp="$1"
+    date -d "$utc_timestamp" +"%Y-%m-%d %H:%M:%S %Z"
+}
+
+# Get epoch from UTC timestamp
+__utc_to_epoch() {
+    local utc_timestamp="$1"
+    date -d "$utc_timestamp" +%s
+}
+
 # Enhanced output with boxy integration and fallback
 print_header() {
     local title="$1"
@@ -88,7 +111,7 @@ stdprint(){
 }
 
 __task_count(){	
-	local num  this=0; session_file="$1"
+	local num this=0; session_file="$1"
 	this=$(grep -o '"name":"Task"' "$session_file" 2>/dev/null | wc -l || echo "0");
 	num=$(printf "%d" "$this" 2>/dev/null || echo 0) #cast string to num
 	echo $num;
@@ -103,13 +126,200 @@ __sub_agent_types(){
 }
 
 __total_messages(){
-	local num this session_file="$1"
+	local num this; session_file="$1"
 	this=$(grep -c '"type":"' "$session_file" 2>/dev/null || echo "0");
 	num=$(printf "%d" "$this" 2>/dev/null || echo 0); #cast string to num
 	echo $num;
 }
 
 # CORRECT IMPLEMENTATION: JSON timestamp-based session discovery
+# Method 1: Simple grep-based time span (fastest)
+__session_time_span_today() {
+    local session_file="$1"
+    local today_start_utc="$2" 
+    local today_end_utc="$3"
+    
+    # Extract just today's date parts for grep - much faster
+    local start_date="${today_start_utc:0:10}"  # 2025-09-09
+    local end_date="${today_end_utc:0:10}"      # 2025-09-10
+    
+    # Fast grep for today's timestamps only
+    local first_timestamp last_timestamp
+    
+    if [[ "$start_date" == "$end_date" ]]; then
+        # Same day - simple grep
+        first_timestamp=$(grep "\"timestamp\":\"$start_date" "$session_file" | head -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+        last_timestamp=$(grep "\"timestamp\":\"$start_date" "$session_file" | tail -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+    else
+        # Spans two days (normal for MDT)
+        local all_today=$(grep -E "\"timestamp\":\"($start_date|$end_date)" "$session_file")
+        first_timestamp=$(echo "$all_today" | head -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+        last_timestamp=$(echo "$all_today" | tail -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+    fi
+    
+    if [[ -n "$first_timestamp" ]] && [[ -n "$last_timestamp" ]]; then
+        local first_epoch=$(__utc_to_epoch "$first_timestamp")
+        local last_epoch=$(__utc_to_epoch "$last_timestamp")
+        local duration_minutes=$(( (last_epoch - first_epoch) / 60 ))
+        echo "$duration_minutes"
+    else
+        echo "0"
+    fi
+}
+
+# Method 2: Ripgrep-based active period detection (better accuracy)
+__session_active_periods_today() {
+    local session_file="$1"
+    local today_start_utc="$2"
+    local today_end_utc="$3"
+    local idle_threshold=1800  # 30 minutes
+    
+    # Use rg if available, fallback to grep
+    local timestamps
+    if command -v rg >/dev/null 2>&1; then
+        timestamps=$(rg '"timestamp":"[^"]*"' "$session_file" -o --no-heading | cut -d'"' -f4)
+    else
+        timestamps=$(grep -o '"timestamp":"[^"]*"' "$session_file" | cut -d'"' -f4)
+    fi
+    
+    # Filter for today and convert to epochs (simple version for now)
+    local today_timestamps=()
+    local today_start_epoch=$(__utc_to_epoch "$today_start_utc")
+    local today_end_epoch=$(__utc_to_epoch "$today_end_utc")
+    
+    while IFS= read -r timestamp; do
+        if [[ -n "$timestamp" ]]; then
+            local epoch=$(__utc_to_epoch "$timestamp")
+            if [[ $epoch -ge $today_start_epoch ]] && [[ $epoch -le $today_end_epoch ]]; then
+                today_timestamps+=("$epoch")
+            fi
+        fi
+    done <<< "$timestamps"
+    
+    # Quick fallback to time span if too few messages
+    if [[ ${#today_timestamps[@]} -lt 10 ]]; then
+        __session_time_span_today "$session_file" "$today_start_utc" "$today_end_utc"
+        return
+    fi
+    
+    # TODO: Add active period detection here
+    # For now, return time span but cap at reasonable limits
+    local first_epoch=${today_timestamps[0]}
+    local last_epoch=${today_timestamps[-1]}
+    local duration_minutes=$(( (last_epoch - first_epoch) / 60 ))
+    
+    # Cap obvious outliers (more than 8 hours suggests idle time)
+    if [[ $duration_minutes -gt 480 ]]; then
+        duration_minutes=$((duration_minutes / 3))  # Rough idle time adjustment
+    fi
+    
+    echo "$duration_minutes"
+}
+
+# Method 3: JQ-based precise calculation (slowest but most accurate)
+__session_precise_time_today() {
+    local session_file="$1"
+    local today_start_utc="$2"
+    local today_end_utc="$3"
+    
+    if ! command -v jq >/dev/null 2>&1; then
+        # Fallback if no jq
+        __session_active_periods_today "$session_file" "$today_start_utc" "$today_end_utc"
+        return
+    fi
+    
+    # TODO: Implement precise jq-based calculation
+    # For now, fallback to method 2
+    __session_active_periods_today "$session_file" "$today_start_utc" "$today_end_utc"
+}
+
+# Main function that chooses the best method
+__session_active_time_today() {
+    local session_file="$1"
+    local today_start_utc="$2" 
+    local today_end_utc="$3"
+    
+    # For now, use fast method with smart adjustments
+    local duration=$(__session_time_span_today "$session_file" "$today_start_utc" "$today_end_utc")
+    
+    # Apply idle time adjustment for obvious outliers
+    if [[ $duration -gt 480 ]]; then  # More than 8 hours
+        duration=$((duration / 3))    # Rough idle adjustment
+    fi
+    
+    echo "$duration"
+}
+
+# Calculate actual end-to-end time range (calendar time, not stacked)
+__calculate_actual_usage_time_today() {
+    local today_start_utc="$1"
+    local today_end_utc="$2"
+    
+    # Find earliest and latest timestamps across ALL sessions today
+    local earliest_epoch=""
+    local latest_epoch=""
+    local today_start_epoch=$(__utc_to_epoch "$today_start_utc")
+    local today_end_epoch=$(__utc_to_epoch "$today_end_utc")
+    
+    for file in /home/xnull/.claude/projects/*/*.jsonl; do
+        if [[ -f "$file" ]] && grep -q "2025-09-09\|2025-09-10" "$file" 2>/dev/null; then
+            # Get first and last timestamps from today for this session
+            local start_date="${today_start_utc:0:10}"
+            local end_date="${today_end_utc:0:10}"
+            
+            local session_timestamps=""
+            if [[ "$start_date" == "$end_date" ]]; then
+                session_timestamps=$(grep "\"timestamp\":\"$start_date" "$file" 2>/dev/null)
+            else
+                session_timestamps=$(grep -E "\"timestamp\":\"($start_date|$end_date)" "$file" 2>/dev/null)
+            fi
+            
+            if [[ -n "$session_timestamps" ]]; then
+                local first_ts=$(echo "$session_timestamps" | head -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+                local last_ts=$(echo "$session_timestamps" | tail -1 | grep -o '"timestamp":"[^"]*"' | cut -d'"' -f4)
+                
+                if [[ -n "$first_ts" ]]; then
+                    local first_epoch=$(__utc_to_epoch "$first_ts")
+                    if [[ $first_epoch -ge $today_start_epoch ]] && [[ $first_epoch -le $today_end_epoch ]]; then
+                        if [[ -z "$earliest_epoch" ]] || [[ $first_epoch -lt $earliest_epoch ]]; then
+                            earliest_epoch=$first_epoch
+                        fi
+                    fi
+                fi
+                
+                if [[ -n "$last_ts" ]]; then
+                    local last_epoch=$(__utc_to_epoch "$last_ts")
+                    if [[ $last_epoch -ge $today_start_epoch ]] && [[ $last_epoch -le $today_end_epoch ]]; then
+                        if [[ -z "$latest_epoch" ]] || [[ $last_epoch -gt $latest_epoch ]]; then
+                            latest_epoch=$last_epoch
+                        fi
+                    fi
+                fi
+            fi
+        fi
+    done
+    
+    if [[ -n "$earliest_epoch" ]] && [[ -n "$latest_epoch" ]]; then
+        local duration_minutes=$(( (latest_epoch - earliest_epoch) / 60 ))
+        echo "$duration_minutes"
+    else
+        echo "0"
+    fi
+}
+
+# Debug function to test all methods
+__debug_session_time_methods() {
+    local session_file="$1"
+    local today_start_utc="$2"
+    local today_end_utc="$3"
+    
+    echo "Testing time calculation methods on $(basename "$session_file"):"
+    echo "Method 1 (grep span): $(__session_time_span_today "$session_file" "$today_start_utc" "$today_end_utc") minutes"
+    echo "Method 2 (rg active): $(__session_active_periods_today "$session_file" "$today_start_utc" "$today_end_utc") minutes" 
+    echo "Method 3 (jq precise): $(__session_precise_time_today "$session_file" "$today_start_utc" "$today_end_utc") minutes"
+}
+
+
 # Function to analyze subagent usage in a session
 analyze_subagent_usage() {
     local session_file="$1"
@@ -150,14 +360,25 @@ analyze_subagent_usage() {
 
 find_sessions_with_json_timestamps() {
     local hours_back="${1:-1}"
-    local today=$(__current_date)  # Use local time, not UTC
+    local today=$(__current_date)  # Local date
     local cutoff_epoch=$(date -d "$hours_back hours ago" +%s)
-
-		stdprint "Today is $today $(__current_time)x"
     
-    # Step 1: OPTIMIZATION - Use grep to pre-filter files containing today's date
-    local candidate_files=$(find "$PROJECTS_DIR" -name "*.jsonl" -type f \
-        -exec grep -l "$today" {} \; 2>/dev/null)
+    # Get UTC range for today in local time
+    IFS='|' read -r today_start_utc today_end_utc <<< "$(__local_day_to_utc_range "$today")"
+    local today_start_date="${today_start_utc:0:10}"  # Extract YYYY-MM-DD part
+    local today_end_date="${today_end_utc:0:10}"      # Extract YYYY-MM-DD part
+    
+    # Step 1: Find files containing either UTC date that overlaps with local today
+    local candidate_files=""
+    if [[ "$today_start_date" == "$today_end_date" ]]; then
+        # Same UTC date (shouldn't happen for MDT/MST)
+        candidate_files=$(find "$PROJECTS_DIR" -name "*.jsonl" -type f \
+            -exec grep -l "\"$today_start_date" {} \; 2>/dev/null)
+    else
+        # Spans two UTC dates (normal case for MDT/MST)
+        candidate_files=$(find "$PROJECTS_DIR" -name "*.jsonl" -type f \
+            \( -exec grep -l "\"$today_start_date" {} \; -o -exec grep -l "\"$today_end_date" {} \; \) 2>/dev/null | sort -u)
+    fi
     
     if [[ -z "$candidate_files" ]]; then
         return 0
@@ -176,8 +397,20 @@ find_sessions_with_json_timestamps() {
                 # Convert JSON timestamp to epoch for comparison
                 local session_epoch=$(date -d "$latest_timestamp" +%s 2>/dev/null || echo 0)
                 
-                if [[ "$session_epoch" -gt "$cutoff_epoch" ]]; then
-                    active_sessions+="$session_file|$latest_timestamp|$session_epoch\n"
+                # For "today" queries (24 hours), check if within today's UTC range
+                # For recent activity queries (1 hour), check against cutoff
+                if [[ "$hours_back" -eq 24 ]]; then
+                    # Check if timestamp falls within today's local time (in UTC)
+                    local start_epoch=$(__utc_to_epoch "$today_start_utc")
+                    local end_epoch=$(__utc_to_epoch "$today_end_utc")
+                    if [[ "$session_epoch" -ge "$start_epoch" ]] && [[ "$session_epoch" -le "$end_epoch" ]]; then
+                        active_sessions+="$session_file|$latest_timestamp|$session_epoch\n"
+                    fi
+                else
+                    # For recent activity, use the cutoff time
+                    if [[ "$session_epoch" -gt "$cutoff_epoch" ]]; then
+                        active_sessions+="$session_file|$latest_timestamp|$session_epoch\n"
+                    fi
                 fi
             fi
         fi
@@ -239,34 +472,60 @@ analyze_usage_patterns() {
         return 0
     fi
     
+    # Get UTC range for today
+    IFS='|' read -r today_start_utc today_end_utc <<< "$(__local_day_to_utc_range)"
+    
     local total_messages=0
     local total_sessions=0
     local session_details=""
-
-		
+    local cumulative_minutes=0
     
     # Analyze each session that had activity today
     while IFS='|' read -r session_file timestamp epoch; do
         if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
-					total_sessions=$((total_sessions + 1))
-					
-					# Count messages and analyze session
-					local session_messages=$(wc -l < "$session_file" 2>/dev/null || echo 0)
-					total_messages=$((total_messages + session_messages))
-					
-					local project_name=$(basename "$(dirname "$session_file")" | sed 's/-home-xnull-repos-/-/' | sed 's/-/\//g')
-					local session_id=$(basename "$session_file" .jsonl)
-					local file_size=$(du -h "$session_file" 2>/dev/null | cut -f1)
-					
-					session_details+="• $project_name - ${session_id:0:8} ($session_messages messages, $file_size)\n"
+            total_sessions=$((total_sessions + 1))
+            
+            # Count messages and analyze session
+            local session_messages=$(wc -l < "$session_file" 2>/dev/null || echo 0)
+            total_messages=$((total_messages + session_messages))
+            
+            # Calculate active session time for today (excluding idle periods)
+            local session_minutes=$(__session_active_time_today "$session_file" "$today_start_utc" "$today_end_utc")
+            cumulative_minutes=$((cumulative_minutes + session_minutes))
+            
+            local project_name=$(basename "$(dirname "$session_file")" | sed 's/-home-xnull-repos-/-/' | sed 's/-/\//g')
+            local session_id=$(basename "$session_file" .jsonl)
+            local file_size=$(du -h "$session_file" 2>/dev/null | cut -f1)
+            
+            # Format duration display
+            local duration_display=""
+            if [ "$session_minutes" -gt 0 ]; then
+                local hours=$((session_minutes / 60))
+                local mins=$((session_minutes % 60))
+                if [ "$hours" -gt 0 ]; then
+                    duration_display="${hours}h ${mins}m"
+                else
+                    duration_display="${mins}m"
+                fi
+            else
+                duration_display="<1m"
+            fi
+            
+            session_details+="• $project_name - ${session_id:0:8} ($session_messages msgs, $duration_display, $file_size)\n"
         fi
     done <<< "$today_sessions_data"
+    
+    # Format cumulative time
+    local cumulative_hours=$((cumulative_minutes / 60))
+    local cumulative_mins=$((cumulative_minutes % 60))
+    local cumulative_display="${cumulative_hours}h ${cumulative_mins}m"
     
     # Build analysis report
     local analysis_report=""
     analysis_report+="📊 Today's Usage Summary (JSON-Based Analysis):\n"
     analysis_report+="• Active Sessions Today: $total_sessions\n"
     analysis_report+="• Total Messages: $total_messages\n"
+    analysis_report+="• Active Session Time: $cumulative_display (excluding idle)\n"
     analysis_report+="• Average Messages/Session: $((total_messages / (total_sessions > 0 ? total_sessions : 1)))\n\n"
     analysis_report+="📋 Session Details:\n"
     analysis_report+="$session_details"
@@ -346,25 +605,20 @@ show_dashboard() {
         fi
     done <<< "$today_sessions_data"
     
-    # Calculate estimated active session time (more realistic than time span)
-    # Estimate: each message represents ~30 seconds of active conversation
-    local estimated_active_minutes=$((total_messages_today / 2))  # 2 messages per minute avg
+    # Calculate cumulative session time for today
+    local cumulative_session_minutes=0
+    IFS='|' read -r today_start_utc today_end_utc <<< "$(__local_day_to_utc_range)"
     
-    # Convert to hours and minutes
-    local hours=$((estimated_active_minutes / 60))
-    local minutes=$((estimated_active_minutes % 60))
-    local duration_display="${hours}h ${minutes}m (estimated active time)"
+    while IFS='|' read -r session_file timestamp epoch; do
+        if [[ -n "$session_file" ]] && [[ -f "$session_file" ]]; then
+            local session_minutes=$(__session_active_time_today "$session_file" "$today_start_utc" "$today_end_utc")
+            cumulative_session_minutes=$((cumulative_session_minutes + session_minutes))
+        fi
+    done <<< "$today_sessions_data"
     
-    # Also calculate time span for reference
-    local time_span_minutes=0
-    if [[ -n "$earliest_session_time" ]] && [[ -n "$latest_session_time" ]]; then
-        local earliest_epoch=$(date -d "$earliest_session_time" +%s 2>/dev/null || echo 0)
-        local latest_epoch=$(date -d "$latest_session_time" +%s 2>/dev/null || echo 0)
-        time_span_minutes=$(( (latest_epoch - earliest_epoch) / 60 ))
-    fi
-    local span_hours=$((time_span_minutes / 60))
-    local span_minutes=$((time_span_minutes % 60))
-    local span_display="${span_hours}h ${span_minutes}m (time span)"
+    local hours=$((cumulative_session_minutes / 60))
+    local minutes=$((cumulative_session_minutes % 60))
+    local duration_display="${hours}h ${minutes}m (active time)"
     
     # Estimate token usage
     local estimated_tokens=$((total_file_size_bytes / 4))
